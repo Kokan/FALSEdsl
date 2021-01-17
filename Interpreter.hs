@@ -5,31 +5,38 @@ import ADT
 
 import Control.Monad.State
 import System.IO
+import Data.Map
 
 
+type Variables = Map String StackEntry
 type Stack = [StackEntry]
-type Universe = Stack
+type Universe = (Stack, Variables)
 type MyState a = StateT Universe IO a
 
 emptyUniverse :: Universe
-emptyUniverse = []
+emptyUniverse = ([], empty)
 
 getStack :: MyState Stack
 getStack = do
          universe <- get
-         return $ universe
+         return $ fst universe
+
+getVariables :: MyState Variables
+getVariables = do
+         universe <- get
+         return $ snd universe
 
 
 push :: StackEntry -> MyState ()
 push e = do
     universe <- get
-    put $ (e : universe)
+    put $ ((e : fst universe), snd universe)
 
 pop :: MyState StackEntry
 pop = do
     universe <- get
-    put $ (tail universe)
-    return $ head universe
+    put $ (tail (fst universe), snd universe)
+    return $ head (fst universe)
 
 skip :: MyState ()
 skip = do
