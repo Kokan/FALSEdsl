@@ -15,5 +15,5 @@ program1 = [PrintStr "start=", Flush, ReadCh, PushFunction [Dup, PrintNum, Dup, 
 
 
 --main :: Prelude.IO ()
-main = runStateT (execute program1) []
+main = runStateT (execute program1) emptyUniverse
 

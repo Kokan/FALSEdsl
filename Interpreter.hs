@@ -6,18 +6,30 @@ import ADT
 import Control.Monad.State
 import System.IO
 
-type MyState a = StateT [StackEntry] IO a
+
+type Stack = [StackEntry]
+type Universe = Stack
+type MyState a = StateT Universe IO a
+
+emptyUniverse :: Universe
+emptyUniverse = []
+
+getStack :: MyState Stack
+getStack = do
+         universe <- get
+         return $ universe
+
 
 push :: StackEntry -> MyState ()
 push e = do
-    stack <- get
-    put $ (e : stack)
+    universe <- get
+    put $ (e : universe)
 
 pop :: MyState StackEntry
 pop = do
-    stack <- get
-    put $ tail stack
-    return $ head stack
+    universe <- get
+    put $ (tail universe)
+    return $ head universe
 
 skip :: MyState ()
 skip = do
@@ -130,7 +142,7 @@ executeCommand (Rot) = do
                       push z
 executeCommand (Pick) = do
                     idx <- pop
-                    stack <- get
+                    stack <- getStack
                     push $ stack !! stackEntry2int idx
 
 executeCommand (PrintNum) = do
