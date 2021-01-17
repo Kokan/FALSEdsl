@@ -4,6 +4,7 @@ module Interpreter where
 import ADT
 
 import Control.Monad.State
+import System.IO
 
 type MyState a = StateT [StackEntry] IO a
 
@@ -133,11 +134,14 @@ executeCommand (Pick) = do
                     push $ stack !! stackEntry2int idx
 
 executeCommand (PrintNum) = do
-                            x <- pop
-                            -- print should be here: putStrLn "foo"
-                            skip
-executeCommand (PrintStr str) = undefined
-executeCommand (PrintCh) = undefined
-executeCommand (ReadCh) = undefined
-executeCommand (Flush) = skip
+                     n <- pop
+                     liftIO $ putStr $ show n
+executeCommand (PrintStr str) = liftIO $ putStr str
+executeCommand (PrintCh) = do
+                     c <- pop
+                     liftIO $ putStr $ show c
+executeCommand (ReadCh) = do
+                     input <- liftIO $ readLn
+                     push (Integer input)
+executeCommand (Flush) = liftIO $ hFlush stdout
 
