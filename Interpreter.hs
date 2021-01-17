@@ -5,7 +5,7 @@ import ADT
 
 import Control.Monad.State
 
-type MyState a = State [StackEntry] a
+type MyState a = StateT [StackEntry] IO a
 
 push :: StackEntry -> MyState ()
 push e = do
