@@ -5,45 +5,47 @@ import ADT
 
 import Control.Monad.State
 
-push :: StackEntry -> State [StackEntry] ()
+type MyState a = State [StackEntry] a
+
+push :: StackEntry -> MyState ()
 push e = do
     stack <- get
     put $ (e : stack)
 
-pop :: State [StackEntry] StackEntry
+pop :: MyState StackEntry
 pop = do
     stack <- get
     put $ tail stack
     return $ head stack
 
-skip :: State [StackEntry] ()
+skip :: MyState ()
 skip = do
        stack <- get
        put stack
 
-setVar :: StackEntry -> StackEntry -> State [StackEntry] ()
+setVar :: StackEntry -> StackEntry -> MyState ()
 setVar = undefined
 
-getVar :: StackEntry -> State [StackEntry] StackEntry
+getVar :: StackEntry -> MyState StackEntry
 getVar = undefined
 
-ap2 :: (StackEntry -> StackEntry -> StackEntry) ->  State [StackEntry] ()
+ap2 :: (StackEntry -> StackEntry -> StackEntry) ->  MyState ()
 ap2 f = do
       x <- pop
       y <- pop
       push (f x y)
 
-ap1 :: (StackEntry -> StackEntry) ->  State [StackEntry] ()
+ap1 :: (StackEntry -> StackEntry) ->  MyState ()
 ap1 f = do
       x <- pop
       push (f x)
 
-runStackEntry :: StackEntry -> State [StackEntry] ()
+runStackEntry :: StackEntry -> MyState ()
 runStackEntry (Function c) = execute c
 runStackEntry _ = error "not executable"
 
 
-execute :: Commands -> State [StackEntry] ()
+execute :: Commands -> MyState ()
 execute [] = do
         stack <- get
         put stack
@@ -51,7 +53,7 @@ execute (x:xs) = do
         executeCommand x
         execute xs
 
-executeCommand :: Command -> State [StackEntry] ()
+executeCommand :: Command -> MyState ()
 executeCommand (PushFunction c) = push (Function c)
 executeCommand (PushVaradr c) = push (Varadr c)
 executeCommand (PushInteger x) = push (Integer x)
