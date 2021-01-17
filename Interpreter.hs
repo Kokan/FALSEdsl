@@ -26,6 +26,22 @@ getVariables = do
          universe <- get
          return $ snd universe
 
+getVariable :: String -> Variables -> StackEntry
+getVariable ch var = var ! ch
+
+setVariable :: String -> StackEntry -> Variables -> Variables
+setVariable = insert
+
+getStateVariable :: String -> MyState StackEntry
+getStateVariable ch = do
+             var <- getVariables
+             return $ getVariable ch var
+
+setStateVariable :: String -> StackEntry -> MyState ()
+setStateVariable key value = do
+             var <- getVariables
+             stack <- getStack
+             put (stack, setVariable key value var)
 
 push :: StackEntry -> MyState ()
 push e = do
@@ -44,10 +60,12 @@ skip = do
        put stack
 
 setVar :: StackEntry -> StackEntry -> MyState ()
-setVar = undefined
+setVar (Varadr ch) = setStateVariable [ch]
+setVar _ = error "not supported operation"
 
 getVar :: StackEntry -> MyState StackEntry
-getVar = undefined
+getVar (Varadr ch) = getStateVariable [ch]
+getVar _ = error "not supported operation"
 
 ap2 :: (StackEntry -> StackEntry -> StackEntry) ->  MyState ()
 ap2 f = do
