@@ -14,7 +14,7 @@ syntax:		pops:		pushes:		example:
 a .. z		-		varadr		a	{ use a: or a; }
 integer		-		value		1
 'char		-		value		'A	{ 65 }
-num`		-		-		0`	{ emitword(0) }
+num`		-		-		0`	{ emitword(0) } -- won't support inlinse asm
 
 :		n,varadr	-		1a:	{ a:=1 }
 ;		varadr		varvalue	a;	{ a }
@@ -40,10 +40,8 @@ $		n		n,n		1$	{ dupl. top stack }
 ø (alt-o)	n		v		1 2 1ø	{ pick }
 
 
-?		bool,fun	-		a;2=[1f;!]?
-						{ if a=2 then f(1) }
-#		boolf,fun	-		1[$100<][1+]#
-						{ while a<100 do a:=a+1 }
+?		bool,fun	-		a;2=[1f;!]?  { if a=2 then f(1) }
+#		boolf,fun	-		1[$100<][1+]# { while a<100 do a:=a+1 }
 
 .		n		-		1.	{ printnum(1) }
 "string"	-		-		"hi!"	{ printstr("hi!") }
