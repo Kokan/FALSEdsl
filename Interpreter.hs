@@ -109,11 +109,11 @@ executeCommand (RunFunction) = do
                   f <- pop
                   runStackEntry f
 
-executeCommand (Add) = ap2 (ap2StackEntry (Prelude.+))
-executeCommand (Sub) = ap2 (ap2StackEntry (Prelude.-))
-executeCommand (Mul) = ap2 (ap2StackEntry (Prelude.*))
-executeCommand (Div) = ap2 (ap2StackEntry (Prelude.div))
-executeCommand (Minus) = ap1 (ap1StackEntry (\x -> (-1) Prelude.* x))
+executeCommand (Add) = ap2 (ap2StackEntry (+))
+executeCommand (Sub) = ap2 (ap2StackEntry (-))
+executeCommand (Mul) = ap2 (ap2StackEntry (*))
+executeCommand (Div) = ap2 (ap2StackEntry (div))
+executeCommand (Minus) = ap1 (ap1StackEntry (\x -> (-1) * x))
 
 executeCommand (Equal) = ap2 (apStackEntryEqual)
 executeCommand (Larger) = ap2 (apStackEntryLarger)
