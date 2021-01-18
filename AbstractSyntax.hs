@@ -1,5 +1,5 @@
 {-# LANGUAGE GADTs #-}
-module ADT where
+module AbstractSyntax where
 
 import qualified Prelude
 

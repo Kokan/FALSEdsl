@@ -4,7 +4,7 @@ import Prelude
 import qualified Data.Stack
 import Control.Monad.State
 
-import ADT
+import AbstractSyntax
 import Interpreter
 
 program :: Commands

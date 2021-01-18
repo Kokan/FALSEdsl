@@ -1,7 +1,7 @@
 {-# LANGUAGE GADTs #-}
 module Interpreter where
 
-import ADT
+import AbstractSyntax
 
 import Control.Monad.State
 import System.IO
