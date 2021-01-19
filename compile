@@ -1,0 +1,9 @@
+#!/usr/bin/bash
+
+set -e
+
+rm -f test test.cpp
+cabal run
+c++ -g -o test test.cpp
+echo "run test"
+./test

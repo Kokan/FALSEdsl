@@ -54,7 +54,7 @@ type Commands = [Command]
 
 
 ap2StackEntry :: (Int -> Int -> Int) -> StackEntry -> StackEntry -> StackEntry
-ap2StackEntry f (Integer x) (Integer y) = Integer (f x y)
+ap2StackEntry f (Integer x) (Integer y) = Integer (x `f` y)
 ap2StackEntry _ _ _ = error "not supported operation"
 
 ap1StackEntry :: (Int -> Int) -> StackEntry -> StackEntry
@@ -62,16 +62,16 @@ ap1StackEntry f (Integer x) = Integer (f x)
 ap1StackEntry _ _ = error "not supported operation"
 
 apStackEntryEqual :: StackEntry -> StackEntry -> StackEntry
-apStackEntryEqual (Integer x) (Integer y) | x == y    = Integer 1
+apStackEntryEqual (Integer x) (Integer y) | x == y    = Integer (-1)
                                           | otherwise = Integer 0
-apStackEntryEqual (Char x) (Char y) | x == y    = Integer 1
+apStackEntryEqual (Char x) (Char y) | x == y    = Integer (-1)
                                     | otherwise = Integer 0
 apStackEntryEqual _ _ = error "not supported operation"
 
 apStackEntryLarger :: StackEntry -> StackEntry -> StackEntry
-apStackEntryLarger (Integer x) (Integer y) | x > y     = Integer 1
+apStackEntryLarger (Integer x) (Integer y) | x > y     = Integer (-1)
                                            | otherwise = Integer 0
-apStackEntryLarger (Char x) (Char y) | x > y     = Integer 1
+apStackEntryLarger (Char x) (Char y) | x > y     = Integer (-1)
                                      | otherwise = Integer 0
 apStackEntryLarger _ _ = error "not supported operation"
 
@@ -79,12 +79,12 @@ apStackEntryLarger _ _ = error "not supported operation"
 andInt :: Int -> Int -> Int
 andInt 0 _ = 0
 andInt _ 0 = 0
-andInt _ _ = 1
+andInt _ _ = (-1)
 
 
 orInt :: Int -> Int -> Int
 orInt 0 0 = 0
-orInt _ _ = 1
+orInt _ _ = (-1)
 
 ifStackEntry :: StackEntry -> Bool
 ifStackEntry (Integer 0) = False

@@ -3,61 +3,91 @@ module Compiler where
 import AbstractSyntax
 import Control.Monad.State
 
-type MyState a = State String a
+type Code = (Int)
 
-compile :: Commands -> MyState String
-compile [] = do
-          universe <- get
-          return universe
-compile (x:xs) = do
-           compileCommand x
-           res <- get
-           put $ res <> "\n"
-           compile xs
+type MyState a = State Code a
 
-op2 :: String -> String
-op2 f = "{\nint a = stack.pop();\n int b = stack.pop();\nstack.push(a " <> f <> " b);\n};"
+emptyState :: Code
+emptyState = (0)
 
-op1 :: String -> String
-op1 f = "{\nint a = stack.pop();\nstack.push(" <> f <> " a);\n};"
+compileToFile :: Commands -> FilePath -> IO ()
+compileToFile c file = writeFile file $ compile c
 
-compileCommand :: Command -> MyState ()
+compile :: Commands -> String
+compile c = let result = fst (runState (compile' c) emptyState)
+            in  "#include <iostream>\n#include <map>\n#include \"falselib.hpp\"\n\n" <> fst result <> "\n\nint main()\n{\nUniverse universe;\nstd::map<SEP,SEP> variables;\n" <> snd result <> "return 0;\n}"
+
+debug :: Command -> String
+--debug c = "\nstd::cerr << \"" <> show c <> "\" << std::endl;\n" 
+debug c = ""
+
+compile' :: Commands -> MyState (String, String)
+compile' [] = return $ mempty
+compile' (x:xs) = do
+           (func, command) <- compileCommand x
+           (funcs, commands) <- compile' xs
+           return $ (funcs <> "\n" <> func, debug x <> command <> "\n" <> commands)
+
+op2 :: String -> (String, String)
+op2 f = ("", "{\nSEP b = pop(universe);\nSEP a = pop(universe);\n\npush(universe, make_integer(a->getAsInt() " <> f <> " b->getAsInt()));\n};")
+
+op2l :: String -> (String, String)
+op2l f = ("", "{\nSEP b = pop(universe);\nSEP a = pop(universe);\n\npush(universe, make_integer(a->getAsInt() " <> f <> " b->getAsInt() ? (-1) : 0 ));\n};")
+
+op1 :: String -> (String, String)
+op1 f = ("", "{\nSEP a = pop(universe);\npush(universe, make_integer(" <> f <> " a->getAsInt()));\n};")
+
+gen_fun :: String -> MyState String
+gen_fun fun = do
+        name <- get_fun_name
+        modify (+1)
+        return $ "void " <> name <> "(Universe &universe)\n{\n" <> fun <> "\n};"
+
+get_fun_name :: MyState String
+get_fun_name = do
+          idx <- get
+          return $ "gen_fun" <> show idx
+
+compileCommand :: Command -> MyState (String, String)
 compileCommand (PushFunction c) = do
-                          fun <- compile c
-                          put $ "stack.push(" <> fun <> ");"
-compileCommand (PushVaradr c) = put $ "stack.push(" <> [c] <> ");"
-compileCommand (PushInteger x) = put $ "stack.push(" <> show x <> ");"
-compileCommand (PushChar x) = put $ "stack.push(" <> [x] <> ");"
+                          (rec_fun, fun) <- compile' c
+                          fun_name <- get_fun_name
+                          fun <- gen_fun fun
+                          return $ (rec_fun <> "\n" <> fun, "push(universe, make_function( std::function<void(Universe&)>(" <> fun_name <> ")));")
+compileCommand (PushVaradr c) = return $ ("", "push(universe, make_varadr('" <> [c] <> "'));")
+compileCommand (PushInteger x) = return $ ("", "push(universe, make_integer(" <> show x <> "));")
+compileCommand (PushChar x) = return $ ("", "push(universe, make_char('" <> [x] <> "'));")
 
-compileCommand (AssignVar) = undefined
-compileCommand (PushVar) = undefined
-compileCommand (RunFunction) = undefined
+compileCommand (AssignVar) = return $ ("", "assign_var_command(universe);")
+compileCommand (PushVar) = return $ ("", "push_var_command(universe);")
+compileCommand (RunFunction) = return $ ("", "{ SEP f = pop(universe);\nf->call(universe);\n}")
 
-compileCommand (Add) = put $ op2 "+"
-compileCommand (Sub) = put $ op2 "-"
-compileCommand (Mul) = put $ op2 "*"
-compileCommand (Div) = put $ op2 "/"
-compileCommand (Minus) = put $ op1 "-"
+compileCommand (Add) = return $ op2 "+"
+compileCommand (Sub) = return $ op2 "-"
+compileCommand (Mul) = return $ op2 "*"
+compileCommand (Div) = return $ op2 "/"
+compileCommand (Minus) = return $ op1 "-"
 
-compileCommand (Equal) = put $ op2 "=="
-compileCommand (Larger) = put $ op2 ">"
+compileCommand (Equal) = return $ op2l "=="
+compileCommand (Larger) = return $ op2l ">"
 
-compileCommand (And) = put $ op2 "&&"
-compileCommand (Or) = put $ op2 "||"
-compileCommand (Not) = put $ op1 "!"
+compileCommand (And) = return $ op2 "&&"
+compileCommand (Or) = return $ op2 "||"
+compileCommand (Not) = return $ op1 "!"
 
-compileCommand (If) = put $ "{\nint a = stack.pop();\nif (a)\n{\n}\n}"
-compileCommand (While) = undefined
+compileCommand (If) = return $ ("", "{\nSEP comm = pop(universe);\nSEP cond = pop(universe);\nif (cond->getAsInt())\n{\ncomm->call(universe);\n}\n}")
+compileCommand (While) = return $ ("", "while_command(universe);")
 
-compileCommand (Dup) = put $ "{\nint a = stack.pop(); stack.push(a);\nstack.push(a);\n}\n"
-compileCommand (Del) = put $ "stack.pop();"
-compileCommand (Swap) = put $ "{\nint a = stack.pop();\n int b = stack.pop();\nstack.push(b);\nstack.push(b);\n};"
-compileCommand (Rot) = undefined
-compileCommand (Pick) = undefined
 
-compileCommand (PrintNum) = put $ "{\nint a = stack.pop(); std::cout << a;\n}"
-compileCommand (PrintStr str) = put $ "std::cout << \"" <> str <> "\";\n"
-compileCommand (PrintCh) = put $ "{\nint a = stack.pop(); std::cout << a;\n}"
-compileCommand (ReadCh) = undefined
-compileCommand (Flush) = put $ "std::flush(std::cout);"
+compileCommand (Dup) = return $ ("", "{\nSEP a = pop(universe);\nSEP cloned = clone(a.get());\npush(universe, std::move(a));\npush(universe, std::move(cloned));\n}\n")
+compileCommand (Del) = return $ ("", "pop(universe);")
+compileCommand (Swap) = return $ ("", "{\nSEP a = pop(universe);\nSEP b = pop(universe);\npush(universe, std::move(a));\npush(universe, std::move(b));\n};")
+compileCommand (Rot) = return $ ("", "rotate_command(universe);")
+compileCommand (Pick) = return $ ("", "pick_command(universe);")
+
+compileCommand (PrintNum) = return $ ("", "{\nSEP a = pop(universe);\nstd::cout << a->getAsInt();\n}")
+compileCommand (PrintStr str) = return $ ("", "std::cout << \"" <> str <> "\";\n")
+compileCommand (PrintCh) = return $ ("", "{\nSEP a = pop(universe);\nstd::cout << a->getAsChar();\n}")
+compileCommand (ReadCh) = return $ ("", "{\nchar a;\nstd::cin >> a;\npush(universe, make_char(a));\n}")
+compileCommand (Flush) = return $ ("", "std::flush(std::cout);")
 

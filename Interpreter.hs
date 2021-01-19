@@ -6,6 +6,7 @@ import AbstractSyntax
 import Control.Monad.State
 import System.IO
 import Data.Map
+import Data.Char
 
 
 type Variables = Map String StackEntry
@@ -69,8 +70,8 @@ getVar _ = error "not supported operation"
 
 ap2 :: (StackEntry -> StackEntry -> StackEntry) ->  MyState ()
 ap2 f = do
-      x <- pop
       y <- pop
+      x <- pop
       push (f x y)
 
 ap1 :: (StackEntry -> StackEntry) ->  MyState ()
@@ -88,6 +89,8 @@ execute [] = do
         stack <- get
         put stack
 execute (x:xs) = do
+        --stack <- getStack
+        --liftIO $ putStrLn $ show x <> "               |stack=>" <> show stack
         executeCommand x
         execute xs
 
@@ -120,19 +123,19 @@ executeCommand (Larger) = ap2 (apStackEntryLarger)
 
 executeCommand (And) = ap2 (ap2StackEntry andInt)
 executeCommand (Or) = ap2 (ap2StackEntry orInt)
-executeCommand (Not) = ap1 (ap1StackEntry (\x -> 1 - (max 1 x)))
+executeCommand (Not) = ap1 (ap1StackEntry (\x -> if x == 0 then -1 else 0))
 
 executeCommand (If) = do
-                 cond <- pop
                  func <- pop
+                 cond <- pop
                  if ifStackEntry cond
                  then
                    runStackEntry func
                  else
                    skip
 executeCommand (While) = do
-                 condf <- pop
                  func  <- pop
+                 condf <- pop
 
                  runStackEntry condf
                  cond  <- pop
@@ -140,8 +143,8 @@ executeCommand (While) = do
                  then do
                    runStackEntry func
 
-                   push func
                    push condf
+                   push func
                    executeCommand While
                  else
                    skip
@@ -178,7 +181,7 @@ executeCommand (PrintCh) = do
                      c <- pop
                      liftIO $ putStr $ show c
 executeCommand (ReadCh) = do
-                     input <- liftIO $ readLn
-                     push (Integer input)
+                     input <- liftIO $ getChar
+                     push (Integer $ ord input)
 executeCommand (Flush) = liftIO $ hFlush stdout
 
