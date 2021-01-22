@@ -12,6 +12,14 @@ import Examples
 currentProgram :: Commands
 currentProgram = program1
 
-main = runStateT (execute currentProgram) emptyUniverse
---main = compileToFile currentProgram "test.cpp"
+debug_arg :: [Prelude.String] -> Prelude.Bool
+debug_arg = Prelude.elem "debug"
+
+main = do
+  args <- System.Environment.getArgs
+  if (Prelude.elem "interpreter" args)
+  then do 
+       Control.Monad.State.runStateT (execute currentProgram) (emptyUniverse (debug_arg args))
+       Prelude.putStrLn ""
+  else compileToFile currentProgram (debug_arg args) "test.cpp"
 

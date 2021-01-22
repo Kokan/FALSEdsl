@@ -3,30 +3,37 @@ module Compiler where
 import AbstractSyntax
 import Control.Monad.State
 
-type Code = (Int)
+type Code = (Int, Bool)
 
 type MyState a = State Code a
 
-emptyState :: Code
-emptyState = (0)
+emptyState :: Bool -> Code
+emptyState debug = (0, debug)
 
-compileToFile :: Commands -> FilePath -> IO ()
-compileToFile c file = writeFile file $ compile c
+getDebug :: MyState Bool
+getDebug = do
+         (_,debug) <- get
+         return $ debug
 
-compile :: Commands -> String
-compile c = let result = fst (runState (compile' c) emptyState)
-            in  "#include <iostream>\n#include <map>\n#include \"falselib.hpp\"\n\n" <> fst result <> "\n\nint main()\n{\nUniverse universe;\nstd::map<SEP,SEP> variables;\n" <> snd result <> "return 0;\n}"
+compileToFile :: Commands -> Bool -> FilePath -> IO ()
+compileToFile c d file = writeFile file $ compile c d
+
+compile :: Commands -> Bool -> String
+compile c d = let result = fst (runState (compile' c) (emptyState d))
+              in  "#include <iostream>\n#include <map>\n#include \"falselib.hpp\"\n\n" <> fst result <> "\n\nint main()\n{\nUniverse universe;\nstd::map<SEP,SEP> variables;\n" <> snd result <> "return 0;\n}"
 
 debug :: Command -> String
---debug c = "\ndebug_universe(universe);\nstd::cout << R\"(" <> show c <> ")\" << std::endl;\n"
-debug c = ""
+debug c = "\ndebug_universe(universe);\nstd::cout << R\"(" <> show c <> ")\" << std::endl;\n"
 
 compile' :: Commands -> MyState (String, String)
 compile' [] = return $ mempty
 compile' (x:xs) = do
            (func, command) <- compileCommand x
            (funcs, commands) <- compile' xs
-           return $ (funcs <> "\n" <> func, command <> debug x <> "\n" <> commands)
+           d <- getDebug
+           if d then return $ (funcs <> "\n" <> func, command <> debug x <> "\n" <> commands)
+           else return $ (funcs <> "\n" <> func, command <> "\n" <> commands)
+          
 
 op2 :: String -> (String, String)
 op2 f = ("", "{\nSEP b = pop(universe);\nSEP a = pop(universe);\n\npush(universe, make_integer(a->getAsInt() " <> f <> " b->getAsInt()));\n};")
@@ -40,12 +47,12 @@ op1 f = ("", "{\nSEP a = pop(universe);\npush(universe, make_integer(" <> f <> "
 gen_fun :: String -> MyState String
 gen_fun fun = do
         name <- get_fun_name
-        modify (+1)
+        modify (\(x,y) -> (x+1,y))
         return $ "void " <> name <> "(Universe &universe)\n{\n" <> fun <> "\n};"
 
 get_fun_name :: MyState String
 get_fun_name = do
-          idx <- get
+          (idx,_) <- get
           return $ "gen_fun" <> show idx
 
 compileCommand :: Command -> MyState (String, String)

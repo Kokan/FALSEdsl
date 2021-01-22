@@ -11,7 +11,7 @@ import Data.Char
 
 type Variables = Map String StackEntry
 type Stack = [StackEntry]
-type Universe = (Stack, Variables)
+type Universe = (Stack, Variables, Bool)
 type MyState a = StateT Universe IO a
 
 printAsInt :: StackEntry -> Int
@@ -24,18 +24,23 @@ printAsCh (Integer i) = chr i
 printAsCh (Char c) = c
 printAsCh _ = error "printing only Integer or Char"
 
-emptyUniverse :: Universe
-emptyUniverse = ([], empty)
+emptyUniverse :: Bool -> Universe
+emptyUniverse debug = ([], empty, debug)
 
 getStack :: MyState Stack
 getStack = do
-         universe <- get
-         return $ fst universe
+         (stack,_,_) <- get
+         return $ stack
 
 getVariables :: MyState Variables
 getVariables = do
-         universe <- get
-         return $ snd universe
+         (_,var,_) <- get
+         return $ var
+
+getDebug :: MyState Bool
+getDebug = do
+         (_,_,debug) <- get
+         return $ debug
 
 getVariable :: String -> Variables -> StackEntry
 getVariable ch var = var ! ch
@@ -52,18 +57,19 @@ setStateVariable :: String -> StackEntry -> MyState ()
 setStateVariable key value = do
              var <- getVariables
              stack <- getStack
-             put (stack, setVariable key value var)
+             debug <- getDebug
+             put (stack, setVariable key value var, debug)
 
 push :: StackEntry -> MyState ()
 push e = do
-    universe <- get
-    put $ ((e : fst universe), snd universe)
+    (stack,var,debug)<- get
+    put $ ((e : stack), var, debug)
 
 pop :: MyState StackEntry
 pop = do
-    universe <- get
-    put $ (tail (fst universe), snd universe)
-    return $ head (fst universe)
+    (stack,var,debug)<- get
+    put $ (tail (stack), var, debug)
+    return $ head stack
 
 skip :: MyState ()
 skip = do
@@ -102,10 +108,13 @@ execute [] = do
         put stack
 execute (x:xs) = do
         stack <- getStack
-        --liftIO $ putStrLn $ show x <> "\t|stackB=>" <> show stack
+        debug <- getDebug
+        if debug then liftIO $ putStrLn $ show x <> "\t|stackB=>" <> show stack
+        else skip
         executeCommand x
         stack2 <- getStack
-        --liftIO $ putStrLn $ show x <> "\t|stackA=>" <> show stack2
+        if debug then liftIO $ putStrLn $ show x <> "\t|stackA=>" <> show stack2
+        else skip
         execute xs
 
 executeCommand :: Command -> MyState ()

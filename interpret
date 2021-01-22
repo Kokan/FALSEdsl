@@ -1,0 +1,6 @@
+#!/usr/bin/bash
+
+set -e
+
+cabal run FALSEdsl -- interpreter "$@"
+
