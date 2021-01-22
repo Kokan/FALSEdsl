@@ -18,7 +18,7 @@ compile c = let result = fst (runState (compile' c) emptyState)
             in  "#include <iostream>\n#include <map>\n#include \"falselib.hpp\"\n\n" <> fst result <> "\n\nint main()\n{\nUniverse universe;\nstd::map<SEP,SEP> variables;\n" <> snd result <> "return 0;\n}"
 
 debug :: Command -> String
---debug c = "\nstd::cerr << \"" <> show c <> "\" << std::endl;\n" 
+--debug c = "\ndebug_universe(universe);\nstd::cout << R\"(" <> show c <> ")\" << std::endl;\n"
 debug c = ""
 
 compile' :: Commands -> MyState (String, String)
@@ -26,7 +26,7 @@ compile' [] = return $ mempty
 compile' (x:xs) = do
            (func, command) <- compileCommand x
            (funcs, commands) <- compile' xs
-           return $ (funcs <> "\n" <> func, debug x <> command <> "\n" <> commands)
+           return $ (funcs <> "\n" <> func, command <> debug x <> "\n" <> commands)
 
 op2 :: String -> (String, String)
 op2 f = ("", "{\nSEP b = pop(universe);\nSEP a = pop(universe);\n\npush(universe, make_integer(a->getAsInt() " <> f <> " b->getAsInt()));\n};")

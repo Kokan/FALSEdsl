@@ -1,6 +1,8 @@
 {-# LANGUAGE GADTs #-}
 module AbstractSyntax where
 
+import qualified Data.Char
+
 type Label = Char
 
 data StackEntry where
@@ -8,7 +10,13 @@ data StackEntry where
     Varadr   :: Label -> StackEntry
     Char     :: Char -> StackEntry
     Function :: Commands -> StackEntry
-    deriving (Show)
+--    deriving (Show)
+
+instance Show StackEntry where
+     show (Integer x) = show x
+     show (Char c) = show c
+     show (Varadr c) = show c
+     show (Function _) = ""
 
 
 data Command where
@@ -55,25 +63,19 @@ type Commands = [Command]
 
 ap2StackEntry :: (Int -> Int -> Int) -> StackEntry -> StackEntry -> StackEntry
 ap2StackEntry f (Integer x) (Integer y) = Integer (x `f` y)
-ap2StackEntry _ _ _ = error "not supported operation"
+ap2StackEntry _ _ _ = error "ap2 not supported operation"
 
 ap1StackEntry :: (Int -> Int) -> StackEntry -> StackEntry
 ap1StackEntry f (Integer x) = Integer (f x)
-ap1StackEntry _ _ = error "not supported operation"
+ap1StackEntry _ _ = error "ap1 not supported operation"
 
 apStackEntryEqual :: StackEntry -> StackEntry -> StackEntry
-apStackEntryEqual (Integer x) (Integer y) | x == y    = Integer (-1)
-                                          | otherwise = Integer 0
-apStackEntryEqual (Char x) (Char y) | x == y    = Integer (-1)
-                                    | otherwise = Integer 0
-apStackEntryEqual _ _ = error "not supported operation"
+apStackEntryEqual x y | (stackEntry2int x) == (stackEntry2int y) = Integer (-1)
+                      | otherwise = Integer 0
 
 apStackEntryLarger :: StackEntry -> StackEntry -> StackEntry
-apStackEntryLarger (Integer x) (Integer y) | x > y     = Integer (-1)
-                                           | otherwise = Integer 0
-apStackEntryLarger (Char x) (Char y) | x > y     = Integer (-1)
-                                     | otherwise = Integer 0
-apStackEntryLarger _ _ = error "not supported operation"
+apStackEntryLarger x y | (stackEntry2int x) > (stackEntry2int y) = Integer (-1)
+                       | otherwise = Integer 0
 
 
 andInt :: Int -> Int -> Int
@@ -89,10 +91,11 @@ orInt _ _ = (-1)
 ifStackEntry :: StackEntry -> Bool
 ifStackEntry (Integer 0) = False
 ifStackEntry (Integer _) = True
-ifStackEntry _ = error "not supported operation"
+ifStackEntry _ = error "if not supported operation"
 
 stackEntry2int :: StackEntry -> Int
 stackEntry2int (Integer x) = x
-stackEntry2int _ = error "not supported operation"
+stackEntry2int (Char c) = Data.Char.ord c
+stackEntry2int _ = error "2int not supported operation"
 
 

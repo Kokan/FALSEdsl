@@ -1,4 +1,6 @@
 #include <stack>
+#include <iostream>
+#include <sstream>
 #include <map>
 #include <memory>
 #include <exception>
@@ -18,6 +20,7 @@ public:
   virtual char getAsVaradr() { throw UnsupportedOperation(); };
   virtual void call(Universe &universe) { throw UnsupportedOperation(); }
   virtual StackEntry* clone() = 0;
+  virtual std::string show() = 0;
 };
 
 typedef std::unique_ptr<StackEntry> SEP;
@@ -35,8 +38,10 @@ public:
   virtual ~Integer() {}
 
   virtual int getAsInt() { return this->i; }
+  virtual char getAsChar() { return this->i; }
 
   virtual StackEntry* clone() { return new Integer(this->i); };
+  virtual std::string show() { std::stringstream ss; ss << this->i; return ss.str();  }
 
 private:
   const int i;
@@ -49,6 +54,7 @@ public:
   virtual StackEntry* clone() { return new Varadr(this->ch); };
 
   virtual char getAsChar() { return this->ch; }
+  virtual std::string show() { std::stringstream ss; ss << this->ch; return ss.str();  }
 private:
   const char ch;
 };
@@ -61,6 +67,7 @@ public:
 
   virtual int getAsInt() { return this->ch; };
   virtual char getAsChar() { return this->ch; }
+  virtual std::string show() { std::stringstream ss; ss << this->ch; return ss.str();  }
 private:
   const char ch;
 };
@@ -71,6 +78,7 @@ public:
 
   virtual StackEntry* clone() { return new Function(this->func); };
   virtual void call(Universe &universe) { func(universe); }
+  virtual std::string show() { return std::string(""); }
 private:
   std::function<void(Universe&)> func;
 };
@@ -110,8 +118,8 @@ static inline void rotate_command(Universe &universe)
    auto y = pop(universe);
    auto z = pop(universe);
 
-   push(universe, std::move(x));
    push(universe, std::move(y));
+   push(universe, std::move(x));
    push(universe, std::move(z));
 }
 
@@ -147,6 +155,15 @@ static inline void while_command(Universe &universe)
   }
 }
 
+static inline void dup_command(Universe &universe)
+{
+  SEP a = pop(universe);
+  SEP cloned = SEP(a->clone());
+
+  push(universe, std::move(a));
+  push(universe, std::move(cloned));
+}
+
 static inline void pick_command(Universe &universe)
 {
   //TODO: this is shitty code, replace it with direct indexing
@@ -154,15 +171,35 @@ static inline void pick_command(Universe &universe)
   SEP idx = pop(universe);
   int index = idx->getAsInt();
 
-  for (int i = 0; i < index; ++i)
+  if (index==0) { dup_command(universe); return; }
+
+  for (int i = 0; i <= index; ++i)
   {
      tmp.push_back(pop(universe));
   }
   SEP cloned = SEP(tmp.back()->clone());
-  for (int i = index; i >= 0; --i)
+  for (int i = tmp.size()-1; i >= 0; --i)
   {
      push(universe, std::move(tmp[i]));
   }
   push(universe, std::move(cloned));
+}
+
+
+static inline void  debug_universe(Universe &universe)
+{
+  //TODO: this is shitty code, replace it with direct indexing
+  std::cout << "   |stack=[ ";
+  if (universe.stack.empty()) return;
+  std::vector<SEP> tmp;
+  while (!universe.stack.empty())
+  {
+     tmp.push_back(pop(universe));
+  }
+  for (int i = tmp.size()-1; i >= 0; --i)
+  {
+     std::cout << tmp[i]->show() << " ";
+     push(universe, std::move(tmp[i]));
+  }
 }
 

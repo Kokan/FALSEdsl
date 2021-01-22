@@ -14,6 +14,16 @@ type Stack = [StackEntry]
 type Universe = (Stack, Variables)
 type MyState a = StateT Universe IO a
 
+printAsInt :: StackEntry -> Int
+printAsInt (Integer i) = i
+printAsInt (Char c) = ord c
+printAsInt _ = error "printing only Integer or Char"
+
+printAsCh :: StackEntry -> Char
+printAsCh (Integer i) = chr i
+printAsCh (Char c) = c
+printAsCh _ = error "printing only Integer or Char"
+
 emptyUniverse :: Universe
 emptyUniverse = ([], empty)
 
@@ -62,11 +72,13 @@ skip = do
 
 setVar :: StackEntry -> StackEntry -> MyState ()
 setVar (Varadr ch) = setStateVariable [ch]
-setVar _ = error "not supported operation"
+setVar (Char ch) = setStateVariable [ch]
+setVar _ = error "setVar not supported operation"
 
 getVar :: StackEntry -> MyState StackEntry
 getVar (Varadr ch) = getStateVariable [ch]
-getVar _ = error "not supported operation"
+getVar (Char ch) = getStateVariable [ch]
+getVar _ = error "getVar not supported operation"
 
 ap2 :: (StackEntry -> StackEntry -> StackEntry) ->  MyState ()
 ap2 f = do
@@ -89,9 +101,11 @@ execute [] = do
         stack <- get
         put stack
 execute (x:xs) = do
-        --stack <- getStack
-        --liftIO $ putStrLn $ show x <> "               |stack=>" <> show stack
+        stack <- getStack
+        --liftIO $ putStrLn $ show x <> "\t|stackB=>" <> show stack
         executeCommand x
+        stack2 <- getStack
+        --liftIO $ putStrLn $ show x <> "\t|stackA=>" <> show stack2
         execute xs
 
 executeCommand :: Command -> MyState ()
@@ -159,8 +173,8 @@ executeCommand (Del) = do
 executeCommand (Swap) = do
                       x <- pop
                       y <- pop
-                      push y
                       push x
+                      push y
 executeCommand (Rot) = do
                       x <- pop
                       y <- pop
@@ -171,15 +185,15 @@ executeCommand (Rot) = do
 executeCommand (Pick) = do
                     idx <- pop
                     stack <- getStack
-                    push $ stack !! stackEntry2int idx
+                    push $ stack !! (stackEntry2int idx)
 
 executeCommand (PrintNum) = do
                      n <- pop
-                     liftIO $ putStr $ show n
+                     liftIO $ putStr $ show $ printAsInt n
 executeCommand (PrintStr str) = liftIO $ putStr str
 executeCommand (PrintCh) = do
                      c <- pop
-                     liftIO $ putStr $ show c
+                     liftIO $ putStr $ [printAsCh c]
 executeCommand (ReadCh) = do
                      input <- liftIO $ getChar
                      push (Integer $ ord input)
