@@ -101,6 +101,11 @@ runStackEntry :: StackEntry -> MyState ()
 runStackEntry (Function c) = execute c
 runStackEntry _ = error "not executable"
 
+run :: Commands -> Bool -> IO ()
+run cmd is_debug = do
+                   runStateT (execute cmd) (emptyUniverse is_debug)
+                   pure ()
+
 
 execute :: Commands -> MyState ()
 execute [] = do

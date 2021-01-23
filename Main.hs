@@ -21,7 +21,7 @@ main = do
   args <- System.Environment.getArgs
   if (Prelude.elem "interpreter" args)
   then do 
-       Control.Monad.State.runStateT (execute currentProgram) (emptyUniverse (debug_arg args))
-       Prelude.putStrLn ""
+       run currentProgram (debug_arg args)
+       Prelude.pure ()
   else compileToFile currentProgram (debug_arg args) "test.cpp"
 

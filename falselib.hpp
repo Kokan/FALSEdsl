@@ -112,7 +112,7 @@ SEP pop(Universe &universe)
    return popAny(universe.stack);
 }
 
-static inline void rotate_command(Universe &universe)
+static inline void Rot_command(Universe &universe)
 {
    auto x = pop(universe);
    auto y = pop(universe);
@@ -123,7 +123,7 @@ static inline void rotate_command(Universe &universe)
    push(universe, std::move(z));
 }
 
-static inline void assign_var_command(Universe &universe)
+static inline void AssignVar_command(Universe &universe)
 {
    SEP key = pop(universe);
    SEP value = pop(universe);
@@ -131,7 +131,7 @@ static inline void assign_var_command(Universe &universe)
    universe.variables.emplace(key->getAsChar(), std::move(value));
 }
 
-static inline void push_var_command(Universe &universe)
+static inline void PushVar_command(Universe &universe)
 {
    SEP key = pop(universe);
 
@@ -140,7 +140,7 @@ static inline void push_var_command(Universe &universe)
    push(universe, SEP(value));
 }
 
-static inline void while_command(Universe &universe)
+static inline void While_command(Universe &universe)
 {
   SEP body = pop(universe);
   SEP condf = pop(universe);
@@ -155,7 +155,23 @@ static inline void while_command(Universe &universe)
   }
 }
 
-static inline void dup_command(Universe &universe)
+static inline void If_command(Universe &universe)
+{
+  SEP body = pop(universe);
+  SEP cond = pop(universe);
+
+  if (cond->getAsInt()) {
+     body->call(universe);
+  }
+}
+
+static inline void RunFunction_command(Universe &universe)
+{
+  SEP function = pop(universe);
+  function->call(universe);
+}
+
+static inline void Dup_command(Universe &universe)
 {
   SEP a = pop(universe);
   SEP cloned = SEP(a->clone());
@@ -164,14 +180,14 @@ static inline void dup_command(Universe &universe)
   push(universe, std::move(cloned));
 }
 
-static inline void pick_command(Universe &universe)
+static inline void Pick_command(Universe &universe)
 {
   //TODO: this is shitty code, replace it with direct indexing
   std::vector<SEP> tmp;
   SEP idx = pop(universe);
   int index = idx->getAsInt();
 
-  if (index==0) { dup_command(universe); return; }
+  if (index==0) { Dup_command(universe); return; }
 
   for (int i = 0; i <= index; ++i)
   {
@@ -183,6 +199,45 @@ static inline void pick_command(Universe &universe)
      push(universe, std::move(tmp[i]));
   }
   push(universe, std::move(cloned));
+}
+
+static inline void Flush_command(Universe &universe)
+{
+  std::flush(std::cout);
+}
+
+static inline void ReadCh_command(Universe &universe)
+{
+  char a;
+  std::cin >> a;
+
+  push(universe, make_char(a));
+}
+
+static inline void PrintCh_command(Universe &universe)
+{
+   SEP a = pop(universe);
+   std::cout << a->getAsChar();
+}
+
+static inline void Swap_command(Universe &universe)
+{
+   SEP a = pop(universe);
+   SEP b = pop(universe);
+
+   push(universe, std::move(a));
+   push(universe, std::move(b));
+}
+
+static inline void Del_command(Universe &universe)
+{
+   pop(universe);
+}
+
+static inline void PrintNum_command(Universe &universe)
+{
+   SEP a = pop(universe);
+   std::cout << a->getAsInt();
 }
 
 

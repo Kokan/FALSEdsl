@@ -16,14 +16,17 @@ getDebug = do
          return $ debug
 
 compileToFile :: Commands -> Bool -> FilePath -> IO ()
-compileToFile c d file = writeFile file $ compile c d
+compileToFile cmd debug file = writeFile file $ compile cmd debug
 
 compile :: Commands -> Bool -> String
-compile c d = let result = fst (runState (compile' c) (emptyState d))
-              in  "#include <iostream>\n#include <map>\n#include \"falselib.hpp\"\n\n" <> fst result <> "\n\nint main()\n{\nUniverse universe;\nstd::map<SEP,SEP> variables;\n" <> snd result <> "return 0;\n}"
+compile c d = let (functions, main)= fst (runState (compile' c) (emptyState d))
+              in  "#include <iostream>\n#include <map>\n#include \"falselib.hpp\"\n\n" <> functions <> "\n\nint main()\n{\nUniverse universe;\nstd::map<SEP,SEP> variables;\n" <> main <> "return 0;\n}"
 
-debug :: Command -> String
-debug c = "\ndebug_universe(universe);\nstd::cout << R\"(" <> show c <> ")\" << std::endl;\n"
+generate_debug :: Command -> String
+generate_debug c = " debug_universe(universe);\nstd::cout << R\"(" <> show c <> ")\" << std::endl;\n"
+
+ret_body :: String -> MyState (String, String)
+ret_body str = return $ ("", str)
 
 compile' :: Commands -> MyState (String, String)
 compile' [] = return $ mempty
@@ -31,8 +34,11 @@ compile' (x:xs) = do
            (func, command) <- compileCommand x
            (funcs, commands) <- compile' xs
            d <- getDebug
-           if d then return $ (funcs <> "\n" <> func, command <> debug x <> "\n" <> commands)
-           else return $ (funcs <> "\n" <> func, command <> "\n" <> commands)
+           if d
+           then
+              return $ (funcs <> "\n" <> func, command <> generate_debug x <> "\n" <> commands)
+           else
+              return $ (funcs <> "\n" <> func, command <>                     "\n" <> commands)
           
 
 op2 :: String -> (String, String)
@@ -44,35 +50,36 @@ op2l f = ("", "{\nSEP b = pop(universe);\nSEP a = pop(universe);\n\npush(univers
 op1 :: String -> (String, String)
 op1 f = ("", "{\nSEP a = pop(universe);\npush(universe, make_integer(" <> f <> " a->getAsInt()));\n};")
 
+gen_fun' :: String -> String -> String
+gen_fun' name body = "void " <> name <> "(Universe &universe)\n{\n" <> body <> "\n};"
+
 gen_fun :: String -> MyState String
-gen_fun fun = do
+gen_fun body = do
         name <- get_fun_name
         modify (\(x,y) -> (x+1,y))
-        return $ "void " <> name <> "(Universe &universe)\n{\n" <> fun <> "\n};"
+        return $ gen_fun' name body
 
 get_fun_name :: MyState String
 get_fun_name = do
           (idx,_) <- get
-          return $ "gen_fun" <> show idx
+          return $ "lambda" <> show idx
 
 compileCommand :: Command -> MyState (String, String)
-compileCommand (Push (Integer i)) = return $ ("", "push(universe, make_integer(" <> show i <> "));")
+compileCommand (Push (Integer i)) = ret_body $ "push(universe, make_integer(" <> show i <> "));"
 compileCommand (Push (Function f)) = do
                           (rec_fun, fun) <- compile' f
+
                           fun_name <- get_fun_name
                           fun <- gen_fun fun
+
                           return $ (rec_fun <> "\n" <> fun, "push(universe, make_function( std::function<void(Universe&)>(" <> fun_name <> ")));")
-compileCommand (Push (Char c)) = return $ ("", "push(universe, make_char('" <> [c] <> "'));")
-compileCommand (Push (Varadr c)) = return $ ("", "push(universe, make_varadr('" <> [c] <> "'));")
+compileCommand (Push (Char c)) = ret_body $ "push(universe, make_char('" <> [c] <> "'));"
+compileCommand (Push (Varadr c)) = ret_body $ "push(universe, make_varadr('" <> [c] <> "'));"
 
 compileCommand (PushFunction c) = compileCommand (Push (Function c))
 compileCommand (PushVaradr c) = compileCommand (Push (Varadr c))
 compileCommand (PushInteger x) = compileCommand (Push (Integer x))
 compileCommand (PushChar x) = compileCommand (Push (Char x))
-
-compileCommand (AssignVar) = return $ ("", "assign_var_command(universe);")
-compileCommand (PushVar) = return $ ("", "push_var_command(universe);")
-compileCommand (RunFunction) = return $ ("", "{ SEP f = pop(universe);\nf->call(universe);\n}")
 
 compileCommand (Add) = return $ op2 "+"
 compileCommand (Sub) = return $ op2 "-"
@@ -87,19 +94,6 @@ compileCommand (And) = return $ op2 "&&"
 compileCommand (Or) = return $ op2 "||"
 compileCommand (Not) = return $ op1 "!"
 
-compileCommand (If) = return $ ("", "{\nSEP comm = pop(universe);\nSEP cond = pop(universe);\nif (cond->getAsInt())\n{\ncomm->call(universe);\n}\n}")
-compileCommand (While) = return $ ("", "while_command(universe);")
+compileCommand (PrintStr str) = ret_body $ "std::cout << \"" <> str <> "\";\n"
 
-
-compileCommand (Dup) = return $ ("", "{\nSEP a = pop(universe);\nSEP cloned = clone(a.get());\npush(universe, std::move(a));\npush(universe, std::move(cloned));\n}\n")
-compileCommand (Del) = return $ ("", "pop(universe);")
-compileCommand (Swap) = return $ ("", "{\nSEP a = pop(universe);\nSEP b = pop(universe);\npush(universe, std::move(a));\npush(universe, std::move(b));\n};")
-compileCommand (Rot) = return $ ("", "rotate_command(universe);")
-compileCommand (Pick) = return $ ("", "pick_command(universe);")
-
-compileCommand (PrintNum) = return $ ("", "{\nSEP a = pop(universe);\nstd::cout << a->getAsInt();\n}")
-compileCommand (PrintStr str) = return $ ("", "std::cout << \"" <> str <> "\";\n")
-compileCommand (PrintCh) = return $ ("", "{\nSEP a = pop(universe);\nstd::cout << a->getAsChar();\n}")
-compileCommand (ReadCh) = return $ ("", "{\nchar a;\nstd::cin >> a;\npush(universe, make_char(a));\n}")
-compileCommand (Flush) = return $ ("", "std::flush(std::cout);")
-
+compileCommand command = ret_body $ show command <> "_command(universe);"

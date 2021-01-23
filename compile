@@ -5,5 +5,4 @@ set -e
 rm -f test test.cpp
 cabal run FALSEdsl -- "$@"
 c++ -g -o test test.cpp
-echo "run test"
 ./test
