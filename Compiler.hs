@@ -56,14 +56,19 @@ get_fun_name = do
           return $ "gen_fun" <> show idx
 
 compileCommand :: Command -> MyState (String, String)
-compileCommand (PushFunction c) = do
-                          (rec_fun, fun) <- compile' c
+compileCommand (Push (Integer i)) = return $ ("", "push(universe, make_integer(" <> show i <> "));")
+compileCommand (Push (Function f)) = do
+                          (rec_fun, fun) <- compile' f
                           fun_name <- get_fun_name
                           fun <- gen_fun fun
                           return $ (rec_fun <> "\n" <> fun, "push(universe, make_function( std::function<void(Universe&)>(" <> fun_name <> ")));")
-compileCommand (PushVaradr c) = return $ ("", "push(universe, make_varadr('" <> [c] <> "'));")
-compileCommand (PushInteger x) = return $ ("", "push(universe, make_integer(" <> show x <> "));")
-compileCommand (PushChar x) = return $ ("", "push(universe, make_char('" <> [x] <> "'));")
+compileCommand (Push (Char c)) = return $ ("", "push(universe, make_char('" <> [c] <> "'));")
+compileCommand (Push (Varadr c)) = return $ ("", "push(universe, make_varadr('" <> [c] <> "'));")
+
+compileCommand (PushFunction c) = compileCommand (Push (Function c))
+compileCommand (PushVaradr c) = compileCommand (Push (Varadr c))
+compileCommand (PushInteger x) = compileCommand (Push (Integer x))
+compileCommand (PushChar x) = compileCommand (Push (Char x))
 
 compileCommand (AssignVar) = return $ ("", "assign_var_command(universe);")
 compileCommand (PushVar) = return $ ("", "push_var_command(universe);")

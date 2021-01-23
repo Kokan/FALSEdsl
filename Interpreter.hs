@@ -118,6 +118,7 @@ execute (x:xs) = do
         execute xs
 
 executeCommand :: Command -> MyState ()
+executeCommand (Push s) = push s
 executeCommand (PushFunction c) = push (Function c)
 executeCommand (PushVaradr c) = push (Varadr c)
 executeCommand (PushInteger x) = push (Integer x)

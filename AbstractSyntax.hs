@@ -20,6 +20,7 @@ instance Show StackEntry where
 
 
 data Command where
+    Push :: StackEntry -> Command
     PushFunction :: Commands -> Command
     PushVaradr :: Char -> Command
     PushInteger :: Int -> Command
