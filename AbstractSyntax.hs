@@ -1,7 +1,7 @@
 {-# LANGUAGE GADTs #-}
 module AbstractSyntax where
 
-import qualified Data.Char
+import Data.Char
 
 type Label = Char
 
@@ -16,7 +16,7 @@ instance Show StackEntry where
      show (Integer x) = show x
      show (Char c) = show c
      show (Varadr c) = show c
-     show (Function _) = ""
+     show (Function _) = "λ"
 
 
 data Command where
@@ -66,8 +66,7 @@ ap2StackEntry :: (Int -> Int -> Int) -> StackEntry -> StackEntry -> StackEntry
 ap2StackEntry f x y = Integer ((stackEntry2int x) `f` (stackEntry2int y))
 
 ap1StackEntry :: (Int -> Int) -> StackEntry -> StackEntry
-ap1StackEntry f (Integer x) = Integer (f x)
-ap1StackEntry _ _ = error "ap1 not supported operation"
+ap1StackEntry f e = Integer $ f $ stackEntry2int e
 
 apStackEntryEqual :: StackEntry -> StackEntry -> StackEntry
 apStackEntryEqual x y | (stackEntry2int x) == (stackEntry2int y) = Integer (-1)
@@ -95,7 +94,7 @@ ifStackEntry _ = error "if not supported operation"
 
 stackEntry2int :: StackEntry -> Int
 stackEntry2int (Integer x) = x
-stackEntry2int (Char c) = Data.Char.ord c
+stackEntry2int (Char c) = ord c
 stackEntry2int _ = error "2int not supported operation"
 
 

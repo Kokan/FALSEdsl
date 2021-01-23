@@ -5,7 +5,7 @@ import qualified Control.Monad.State
 import qualified System.Environment
 
 import AbstractSyntax
-import Interpreter
+import InterpreterS
 import Compiler
 import Examples
 

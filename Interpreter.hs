@@ -1,18 +1,16 @@
-{-# LANGUAGE GADTs #-}
 module Interpreter where
 
 import AbstractSyntax
 
-import Control.Monad.State
-import System.IO
 import Data.Map
 import Data.Char
-
 
 type Variables = Map String StackEntry
 type Stack = [StackEntry]
 type Universe = (Stack, Variables, Bool)
-type MyState a = StateT Universe IO a
+
+emptyUniverse :: Bool -> Universe
+emptyUniverse debug = ([], empty, debug)
 
 printAsInt :: StackEntry -> Int
 printAsInt (Integer i) = i
@@ -24,193 +22,42 @@ printAsCh (Integer i) = chr i
 printAsCh (Char c) = c
 printAsCh _ = error "printing only Integer or Char"
 
-emptyUniverse :: Bool -> Universe
-emptyUniverse debug = ([], empty, debug)
+getStack :: Universe -> Stack
+getStack (stack,_,_) = stack
 
-getStack :: MyState Stack
-getStack = do
-         (stack,_,_) <- get
-         return $ stack
+modStack :: (Stack -> Stack) -> Universe -> Universe
+modStack f universe = (f (getStack universe), getVariables universe, getDebug universe)
 
-getVariables :: MyState Variables
-getVariables = do
-         (_,var,_) <- get
-         return $ var
+getVariables :: Universe -> Variables
+getVariables (_,var,_) = var
 
-getDebug :: MyState Bool
-getDebug = do
-         (_,_,debug) <- get
-         return $ debug
+modVariables :: Universe -> (Variables -> Variables) -> Universe
+modVariables universe f = (getStack universe, f (getVariables universe), getDebug universe)
 
-getVariable :: String -> Variables -> StackEntry
-getVariable ch var = var ! ch
+getDebug :: Universe -> Bool
+getDebug (_,_,debug) = debug
 
-setVariable :: String -> StackEntry -> Variables -> Variables
-setVariable = insert
+modDebug :: Universe -> (Bool -> Bool) -> Universe
+modDebug universe f = (getStack universe, getVariables universe, f (getDebug universe))
 
-getStateVariable :: String -> MyState StackEntry
-getStateVariable ch = do
-             var <- getVariables
-             return $ getVariable ch var
+getVariable :: String -> Universe -> StackEntry
+getVariable name universe = (getVariables universe) ! name
 
-setStateVariable :: String -> StackEntry -> MyState ()
-setStateVariable key value = do
-             var <- getVariables
-             stack <- getStack
-             debug <- getDebug
-             put (stack, setVariable key value var, debug)
+setVariable :: String -> StackEntry -> Universe -> Universe
+setVariable key value universe = modVariables universe (insert key value)
 
-push :: StackEntry -> MyState ()
-push e = do
-    (stack,var,debug)<- get
-    put $ ((e : stack), var, debug)
+push :: StackEntry -> Universe -> Universe
+push entry universe = (entry : getStack universe, getVariables universe, getDebug universe)
 
-pop :: MyState StackEntry
-pop = do
-    (stack,var,debug)<- get
-    put $ (tail (stack), var, debug)
-    return $ head stack
+pop :: Universe -> Universe
+pop = modStack tail
 
-skip :: MyState ()
-skip = do
-       stack <- get
-       put stack
+top :: Universe -> StackEntry
+top universe = head $ getStack universe
 
-setVar :: StackEntry -> StackEntry -> MyState ()
-setVar (Varadr ch) = setStateVariable [ch]
-setVar (Char ch) = setStateVariable [ch]
-setVar _ = error "setVar not supported operation"
+debug :: String -> Universe -> Maybe String
+debug str universe = if (getDebug universe)
+                     then Just $ str <> "\t|stack=>" <> show (getStack universe)
+                     else Nothing
 
-getVar :: StackEntry -> MyState StackEntry
-getVar (Varadr ch) = getStateVariable [ch]
-getVar (Char ch) = getStateVariable [ch]
-getVar _ = error "getVar not supported operation"
-
-ap2 :: (StackEntry -> StackEntry -> StackEntry) ->  MyState ()
-ap2 f = do
-      y <- pop
-      x <- pop
-      push (f x y)
-
-ap1 :: (StackEntry -> StackEntry) ->  MyState ()
-ap1 f = do
-      x <- pop
-      push (f x)
-
-runStackEntry :: StackEntry -> MyState ()
-runStackEntry (Function c) = execute c
-runStackEntry _ = error "not executable"
-
-run :: Commands -> Bool -> IO ()
-run cmd is_debug = do
-                   runStateT (execute cmd) (emptyUniverse is_debug)
-                   pure ()
-
-
-execute :: Commands -> MyState ()
-execute [] = do
-        stack <- get
-        put stack
-execute (x:xs) = do
-        stack <- getStack
-        debug <- getDebug
-        if debug then liftIO $ putStrLn $ show x <> "\t|stackB=>" <> show stack
-        else skip
-        executeCommand x
-        stack2 <- getStack
-        if debug then liftIO $ putStrLn $ show x <> "\t|stackA=>" <> show stack2
-        else skip
-        execute xs
-
-executeCommand :: Command -> MyState ()
-executeCommand (Push s) = push s
-executeCommand (PushFunction c) = push (Function c)
-executeCommand (PushVaradr c) = push (Varadr c)
-executeCommand (PushInteger x) = push (Integer x)
-executeCommand (PushChar x) = push (Char x)
-
-executeCommand (AssignVar) = do
-               var <- pop
-               value <- pop
-               setVar var value
-executeCommand (PushVar) = do
-                  var <- pop
-                  value <- getVar var
-                  push value
-executeCommand (RunFunction) = do
-                  f <- pop
-                  runStackEntry f
-
-executeCommand (Add) = ap2 (ap2StackEntry (+))
-executeCommand (Sub) = ap2 (ap2StackEntry (-))
-executeCommand (Mul) = ap2 (ap2StackEntry (*))
-executeCommand (Div) = ap2 (ap2StackEntry (div))
-executeCommand (Minus) = ap1 (ap1StackEntry (\x -> (-1) * x))
-
-executeCommand (Equal) = ap2 (apStackEntryEqual)
-executeCommand (Larger) = ap2 (apStackEntryLarger)
-
-executeCommand (And) = ap2 (ap2StackEntry andInt)
-executeCommand (Or) = ap2 (ap2StackEntry orInt)
-executeCommand (Not) = ap1 (ap1StackEntry (\x -> if x == 0 then -1 else 0))
-
-executeCommand (If) = do
-                 func <- pop
-                 cond <- pop
-                 if ifStackEntry cond
-                 then
-                   runStackEntry func
-                 else
-                   skip
-executeCommand (While) = do
-                 func  <- pop
-                 condf <- pop
-
-                 runStackEntry condf
-                 cond  <- pop
-                 if ifStackEntry cond
-                 then do
-                   runStackEntry func
-
-                   push condf
-                   push func
-                   executeCommand While
-                 else
-                   skip
-
-executeCommand (Dup) = do
-                       x <- pop
-                       push x
-                       push x
-executeCommand (Del) = do
-                      _ <- pop
-                      skip
-executeCommand (Swap) = do
-                      x <- pop
-                      y <- pop
-                      push x
-                      push y
-executeCommand (Rot) = do
-                      x <- pop
-                      y <- pop
-                      z <- pop
-                      push y
-                      push x
-                      push z
-executeCommand (Pick) = do
-                    idx <- pop
-                    stack <- getStack
-                    push $ stack !! (stackEntry2int idx)
-
-executeCommand (PrintNum) = do
-                     n <- pop
-                     liftIO $ putStr $ show $ printAsInt n
-executeCommand (PrintStr str) = liftIO $ putStr str
-executeCommand (PrintCh) = do
-                     c <- pop
-                     liftIO $ putStr $ [printAsCh c]
-executeCommand (ReadCh) = do
-                     input <- liftIO $ getChar
-                     push (Integer $ ord input)
-executeCommand (Flush) = liftIO $ hFlush stdout
 
