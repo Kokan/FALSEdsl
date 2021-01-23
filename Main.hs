@@ -9,8 +9,10 @@ import Interpreter
 import Compiler
 import Examples
 
+import False
+
 currentProgram :: Commands
-currentProgram = program1
+currentProgram = tafels
 
 debug_arg :: [Prelude.String] -> Prelude.Bool
 debug_arg = Prelude.elem "debug"

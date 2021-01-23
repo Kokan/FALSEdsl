@@ -62,8 +62,7 @@ type Commands = [Command]
 
 
 ap2StackEntry :: (Int -> Int -> Int) -> StackEntry -> StackEntry -> StackEntry
-ap2StackEntry f (Integer x) (Integer y) = Integer (x `f` y)
-ap2StackEntry _ _ _ = error "ap2 not supported operation"
+ap2StackEntry f x y = Integer ((stackEntry2int x) `f` (stackEntry2int y))
 
 ap1StackEntry :: (Int -> Int) -> StackEntry -> StackEntry
 ap1StackEntry f (Integer x) = Integer (f x)
