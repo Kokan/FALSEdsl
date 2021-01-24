@@ -7,7 +7,7 @@ import AbstractSyntaxTypeClasses
 import False
 
 dummy :: Commands
-dummy = [0, a, (\:), "please provide a number: ", bb, (^), a, sc, (\\), (-),  (.)]
+dummy = [0, a, (\:), "please provide a number: ", ab, (^), a, sc, (\\), (-),  (.)]
 
 program :: Commands
 program = [1, [($), 10, (\\), (>)], [($), (.), ($), 1, (+)], (#)]
@@ -16,21 +16,21 @@ larger :: Commands
 larger = [ 3, 2, (>), (.) ]
 
 program1 :: Commands
-program1 = ["start=", bb, 48, (^), (\\), (-), [($), 10, (\\), (>)], [($), (.), ($), 1, (+)], (#)]
+program1 = ["start=", ab, 48, (^), (\\), (-), [($), 10, (\\), (>)], [($), (.), ($), 1, (+)], (#)]
 
 --   ß[^$1_=~][,]#		{ while c:=getc()<>EOF do putc(c) }
 cp :: Commands
-cp = [ bb, [ (^), ($), 1, mm, (==), (\~) ], [ cc ], (#) ]
+cp = [ ab, [ (^), ($), 1, mm, (==), (\~) ], [ cc ], (#) ]
 
 program2 :: Commands
-program2 = [["start=", bb, 48, (^), (\\), (-)], q, (\:),
+program2 = [["start=", ab, 48, (^), (\\), (-)], q, (\:),
             [($), (.), ($), 1, (+)], b, (\:),
             [($), 10, (\\), (>)], c, (\:),
             [q, sc, (!), c, sc, b, sc, (#)], m, (\:),
             m, sc, (!)]
 
 program3 :: Commands
-program3 = [[["start=", bb, 48, (^), (\\), (-)], q, (\:),
+program3 = [[["start=", ab, 48, (^), (\\), (-)], q, (\:),
             [($), (.), ($), 1, (+)], b, (\:),
             [($), 10, (\\), (>)], c, (\:),
             [q, sc, (!), c, sc, b, sc, (#)], m, (\:),

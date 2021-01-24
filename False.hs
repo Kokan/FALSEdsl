@@ -81,9 +81,9 @@ cc = PrintCh
 (^) :: Command
 (^) = ReadCh
 
--- The original is Beta -> bb
-bb :: Command
-bb = Flush
+-- The original is Beta -> ab
+ab :: Command
+ab = Flush
 
 -- The original is ; -> SC
 sc :: Command
@@ -145,7 +145,7 @@ x = Push (Varadr 'x')
 -- [$1=$[\%1\]?~[$1-f;!*]?]f:          { fac() in false }
 -- 
 -- "calculate the faculty of [1..8]: "
--- bb^bb'0-$$0>~\8>|$
+-- ab^ab'0-$$0>~\8>|$
 -- "result: "
 -- ~[\f;!.]?
 -- ["illegal input!"]?"
@@ -155,7 +155,7 @@ x = Push (Varadr 'x')
 fac :: Commands
 fac = [ [($), 1, (==), ($), [ (\\), (%), 1, (\\) ], (?), (\~), [ ($), 1, (-), f, sc, (!), (*) ], (?) ], f, (\:),
         "calculate the faculty of [1..8]: ",
-        bb, (^), bb, PushChar '0', (-), ($), ($), 0, (>), (\~), (\\), 8, (>), (\|), ($),
+        ab, (^), ab, PushChar '0', (-), ($), ($), 0, (>), (\~), (\\), 8, (>), (\|), ($),
         "result ",
         (\~), [ (\\), f, sc, (!), (.) ], (?),
         ["illegal input"], (?), 10, cc ]
