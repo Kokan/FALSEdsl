@@ -1,7 +1,11 @@
-{-# LANGUAGE GADTs #-}
+{-# LANGUAGE GADTs, TypeFamilies, OverloadedStrings, OverloadedLists #-}
 module AbstractSyntax where
 
 import Data.Char
+import Data.String
+import Data.Text
+import GHC.Exts
+import Text.Printf
 
 type Label = Char
 
@@ -17,7 +21,6 @@ instance Show StackEntry where
      show (Char c) = show c
      show (Varadr c) = show c
      show (Function _) = "λ"
-
 
 data Command where
     Push :: StackEntry -> Command
@@ -61,6 +64,13 @@ data Command where
 
 type Commands = [Command]
 
+ap2Command :: (Int -> Int -> Int) -> Command -> Command -> Command
+ap2Command f (Push x) (Push y) = Push $ ap2StackEntry f x y
+ap2Command f x y = error $ " x: " <> show x <> " y: " <> show y
+
+ap1Command :: (Int -> Int) -> Command -> Command
+ap1Command f (Push x) = Push $ ap1StackEntry f x
+ap1Command f x = error $ " x: " <> show x
 
 ap2StackEntry :: (Int -> Int -> Int) -> StackEntry -> StackEntry -> StackEntry
 ap2StackEntry f x y = Integer ((stackEntry2int x) `f` (stackEntry2int y))

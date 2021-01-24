@@ -1,19 +1,16 @@
-{-# LANGUAGE FlexibleInstances, AllowAmbiguousTypes, TypeApplications, ScopedTypeVariables #-}
+{-# LANGUAGE FlexibleInstances, AllowAmbiguousTypes, TypeApplications, ScopedTypeVariables, OverloadedStrings, OverloadedLists, TypeFamilies, OverloadedStrings, OverloadedLists #-}
 
 module False where
 
 import qualified Prelude
+import Data.Char
+import Data.String
+import Data.Text
+import GHC.Exts
+import Text.Printf
 
 import AbstractSyntax
-
---instance Num (Elem Int) where
---    a + b = App (App (Symbol "+" (+)) a) b
---    a - b = App (App (Symbol "-"(-)) a) b
---    a * b = App (App (Symbol "*" (*)) a) b
---    negate a = App (Symbol "negate" negate) a
---    signum a = App (Symbol "signum" signum) a
---    abs a = App (Symbol "abs" abs) a
---    fromInteger a = Symbol (show a) (fromInteger a)
+import AbstractSyntaxTypeClasses
 
 ($) :: Command
 ($) = Dup
@@ -35,6 +32,9 @@ import AbstractSyntax
 (%) :: Command
 (%) = Del
 
+ao :: Command
+ao = Pick
+
 (/) :: Command
 (/) = Div
 
@@ -53,12 +53,15 @@ import AbstractSyntax
 (#) :: Command
 (#) = While
 
--- The original is _ -> m
-m :: Command
-m = Minus
+-- The original is _ -> mm
+mm :: Command
+mm = Minus
 
 (!) :: Command
 (!) = RunFunction
+
+(\@) :: Command
+(\@) = Rot
 
 (?) :: Command
 (?) = If
@@ -72,26 +75,77 @@ m = Minus
 (.) :: Command
 (.) = PrintNum
 
-c :: Command
-c = PrintCh
+cc :: Command
+cc = PrintCh
 
 (^) :: Command
 (^) = ReadCh
 
--- The original is Beta -> b
-b :: Command
-b = Flush
+-- The original is Beta -> bb
+bb :: Command
+bb = Flush
 
 -- The original is ; -> SC
 sc :: Command
 sc = PushVar
+
+-- variables
+-- abcdefghijklmnopqrstuvzwx
+a :: Command
+a = Push (Varadr 'a')
+b :: Command
+b = Push (Varadr 'a')
+c :: Command
+c = Push (Varadr 'a')
+e :: Command
+e = Push (Varadr 'a')
+f :: Command
+f = Push (Varadr 'f')
+g :: Command
+g = Push (Varadr 'g')
+h :: Command
+h = Push (Varadr 'h')
+i :: Command
+i = Push (Varadr 'i')
+j :: Command
+j = Push (Varadr 'j')
+k :: Command
+k = Push (Varadr 'k')
+l :: Command
+l = Push (Varadr 'l')
+m :: Command
+m = Push (Varadr 'm')
+n :: Command
+n = Push (Varadr 'n')
+o :: Command
+o = Push (Varadr 'o')
+p :: Command
+p = Push (Varadr 'p')
+q :: Command
+q = Push (Varadr 'q')
+r :: Command
+r = Push (Varadr 'r')
+s :: Command
+s = Push (Varadr 's')
+t :: Command
+t = Push (Varadr 't')
+u :: Command
+u = Push (Varadr 'u')
+v :: Command
+v = Push (Varadr 'v')
+z :: Command
+z = Push (Varadr 'z')
+w :: Command
+w = Push (Varadr 'w')
+x :: Command
+x = Push (Varadr 'x')
 
 --{ faculty program in false! }
 -- 
 -- [$1=$[\%1\]?~[$1-f;!*]?]f:          { fac() in false }
 -- 
 -- "calculate the faculty of [1..8]: "
--- b^b'0-$$0>~\8>|$
+-- bb^bb'0-$$0>~\8>|$
 -- "result: "
 -- ~[\f;!.]?
 -- ["illegal input!"]?"
@@ -99,10 +153,10 @@ sc = PushVar
 
 
 fac :: Commands
-fac = [ PushFunction [($), PushInteger 1, (==), ($), PushFunction [ (\\), (%), PushInteger 1, (\\) ], (?), (\~), PushFunction [ ($), PushInteger 1, (-), PushVaradr 'f', sc, (!), (*) ], (?) ], PushVaradr 'f', (\:),
-        PrintStr "calculate the faculty of [1..8]: ",
-        b, (^), b, PushChar '0', (-), ($), ($), PushInteger 0, (>), (\~), (\\), PushInteger 8, (>), (\|), ($),
-        PrintStr "result ",
-        (\~), PushFunction [ (\\), PushVaradr 'f', sc, (!), (.) ], (?),
-        PushFunction [PrintStr "illegal input"], (?), PushInteger 10, c ]
+fac = [ [($), 1, (==), ($), [ (\\), (%), 1, (\\) ], (?), (\~), [ ($), 1, (-), f, sc, (!), (*) ], (?) ], f, (\:),
+        "calculate the faculty of [1..8]: ",
+        bb, (^), bb, PushChar '0', (-), ($), ($), 0, (>), (\~), (\\), 8, (>), (\|), ($),
+        "result ",
+        (\~), [ (\\), f, sc, (!), (.) ], (?),
+        ["illegal input"], (?), 10, cc ]
 
