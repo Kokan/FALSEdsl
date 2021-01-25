@@ -1,15 +1,11 @@
 module Main where
 
-import qualified Prelude
-import qualified Control.Monad.State
 import qualified System.Environment
 
 import AbstractSyntax
 import InterpreterS
 import Compiler
 import Examples
-
-import False
 
 currentProgram :: Commands
 currentProgram = tafels
