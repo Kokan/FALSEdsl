@@ -24,9 +24,6 @@ instance Show StackEntry where
 
 data Command where
     Push :: StackEntry -> Command
-    PushFunction :: Commands -> Command
-    PushVaradr :: Char -> Command
-    PushInteger :: Int -> Command
     PushChar :: Char -> Command
 
     AssignVar:: Command
@@ -105,6 +102,7 @@ ifStackEntry _ = error "if not supported operation"
 stackEntry2int :: StackEntry -> Int
 stackEntry2int (Integer x) = x
 stackEntry2int (Char c) = ord c
+stackEntry2int (Varadr c) = ord c
 stackEntry2int _ = error "2int not supported operation"
 
 

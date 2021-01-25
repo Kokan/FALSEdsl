@@ -5,7 +5,6 @@ import qualified Interpreter as Interp
 
 import Control.Monad.State
 import System.IO
-import Data.Map
 import Data.Char
 
 
@@ -22,10 +21,6 @@ getVariables = gets Interp.getVariables
 
 getDebug :: MyState Bool
 getDebug = gets Interp.getDebug
-
-
-setVariable :: String -> StackEntry -> Variables -> Variables
-setVariable = insert
 
 getStateVariable :: String -> MyState StackEntry
 getStateVariable ch = gets (Interp.getVariable ch)
@@ -93,9 +88,6 @@ execute (x:xs) = do
 
 executeCommand :: Command -> MyState ()
 executeCommand (Push s) = push s
-executeCommand (PushFunction c) = push (Function c)
-executeCommand (PushVaradr c) = push (Varadr c)
-executeCommand (PushInteger x) = push (Integer x)
 executeCommand (PushChar x) = push (Char x)
 
 executeCommand (AssignVar) = do

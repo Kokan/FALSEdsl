@@ -1,3 +1,6 @@
+#ifndef _FALSELIB_
+#define _FALSELIB_
+
 #include <stack>
 #include <iostream>
 #include <sstream>
@@ -88,31 +91,19 @@ SEP make_varadr(char c) { return std::unique_ptr<Varadr>(new Varadr(c)); }
 SEP make_char(char i) { return std::unique_ptr<Char>(new Char(i)); }
 SEP make_function(std::function<void(Universe&)> f) { return std::unique_ptr<Function>(new Function(f)); }
 
-SEP clone(StackEntry *self)
-{
-   StackEntry *clone = self->clone();
-
-   return SEP(clone);
-}
-
 void push(Universe &universe, SEP entry)
 {
    universe.stack.push(std::move(entry));
 }
 
-SEP popAny(std::stack<SEP,std::vector<SEP>> &stack)
+SEP pop(Universe &universe)
 {
-   StackEntry* res = stack.top().release();
-   stack.pop();
+   StackEntry* res = universe.stack.top().release();
+   universe.stack.pop();
    return std::unique_ptr<StackEntry>(res);
 }
 
-SEP pop(Universe &universe)
-{
-   return popAny(universe.stack);
-}
-
-static inline void Rot_command(Universe &universe)
+inline void Rot_command(Universe &universe)
 {
    auto x = pop(universe);
    auto y = pop(universe);
@@ -182,7 +173,7 @@ static inline void Dup_command(Universe &universe)
 
 static inline void Pick_command(Universe &universe)
 {
-  //TODO: this is shitty code, replace it with direct indexing
+  //TODO: use direct indexing here
   std::vector<SEP> tmp;
   SEP idx = pop(universe);
   int index = idx->getAsInt();
@@ -243,7 +234,6 @@ static inline void PrintNum_command(Universe &universe)
 
 static inline void  debug_universe(Universe &universe)
 {
-  //TODO: this is shitty code, replace it with direct indexing
   std::cout << "   |stack=[ ";
   if (universe.stack.empty()) return;
   std::vector<SEP> tmp;
@@ -258,3 +248,4 @@ static inline void  debug_universe(Universe &universe)
   }
 }
 
+#endif

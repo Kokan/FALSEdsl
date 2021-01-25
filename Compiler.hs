@@ -76,9 +76,6 @@ compileCommand (Push (Function f)) = do
 compileCommand (Push (Char c)) = ret_body $ "push(universe, make_char('" <> [c] <> "'));"
 compileCommand (Push (Varadr c)) = ret_body $ "push(universe, make_varadr('" <> [c] <> "'));"
 
-compileCommand (PushFunction c) = compileCommand (Push (Function c))
-compileCommand (PushVaradr c) = compileCommand (Push (Varadr c))
-compileCommand (PushInteger x) = compileCommand (Push (Integer x))
 compileCommand (PushChar x) = compileCommand (Push (Char x))
 
 compileCommand (Add) = return $ op2 "+"
