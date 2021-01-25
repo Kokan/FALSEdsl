@@ -2,13 +2,13 @@
 #include <stdio.h>
 
 
-#define COMM(str) std::cout << sep << " " str; break;
+#define COMM(str) std::cout << sep << "(" str << ") "; break;
 
 int main()
 {
 
 
-  char c;
+char c;
 int comment = 0;
 bool string = false;
 bool number = false;
@@ -22,12 +22,12 @@ if (comment>0) continue;
 if (string && c != '"') { putc(c,stdout); continue; }
 
 if ('a' <= c && c <= 'z') {
-  std::cout << sep << " PushChar '"; putc( c,stdout); std::cout << "'";
+  std::cout << sep; putc( c,stdout);
   continue;
 }
 
 if ('0' <= c && c <= '9') {
-  if (!number) {std::cout << sep << " PushInteger "; putc(c,stdout); }
+  if (!number) {std::cout << sep; putc(c,stdout); }
   else putc( c, stdout );
   number=true;
 
@@ -37,36 +37,39 @@ if ('0' <= c && c <= '9') {
 number=false;
 
   switch (c) {
-case '"': string=!string; if (string) std::cout << sep << " PrintStr "; std::cout << "\""; break;
-case '[': std::cout << sep << " PushFunction [ " ;break;
-case ']': std::cout << "]"; break;
-case ':': std::cout << sep << " AssignVar"; break;
-case ';': std::cout << sep << " PushVar"; break;
-case '!': std::cout << sep << " RunFunction"; break;
-case '+': COMM("Add");
-case '-': COMM("Sub");
-case '*': COMM("Mul");
-case '/': COMM("Div");
-case '_': COMM("Minus");
-case '=': COMM("Equal");
-case '>': COMM("Larger");
-case '&': COMM("And");
-case '|': COMM("Or");
-case '~': COMM("Not");
-case '$': COMM("Dup");
-case '%': COMM("Del");
-case '\\': COMM("Swap");
-case '@': COMM("Rot");
-case L'ø': COMM("Pick");
-case ' ': putc(' ', stdout); break;
-case '\n': putc(' ', stdout); break;
-case '\r': putc(' ', stdout); break;
-case '?' : COMM("If");
-case '#' : COMM("While");
-case '.' : COMM("PrintNum");
-case ',' : COMM("PrintCh");
-case '^' : COMM("ReadCh");
-case L'ß' : COMM("Flush");
+case '"': string=!string; if (string) std::cout << sep; std::cout << "\""; break;
+case '[': std::cout << sep << " [ " ; sep = ""; continue;
+case ']': std::cout << "]"; continue;
+case ':': COMM("\\:");
+case ';': std::cout << sep << " sc"; break;
+case '!': COMM("!");
+case '+': COMM("+");
+case '-': COMM("-");
+case '*': COMM("*");
+case '/': COMM("/");
+case '_': COMM("-");
+case '=': COMM("==");
+case '>': COMM(">");
+case '&': COMM("&");
+case '|': COMM("|");
+case '~': COMM("\\~");
+case '$': COMM("$");
+case '%': COMM("%");
+case '\\': COMM("\\\\");
+case '@': COMM("@");
+case L'ø': std::cout << sep << " ao"; break;
+case ' ': putc(' ', stdout); continue;
+case '\n': putc(' ', stdout); continue;
+case '\r': putc(' ', stdout); continue;
+case '?' : COMM("?");
+case '#' : COMM("#");
+case '.' : COMM(".");
+case ',' : std::cout << sep << " cc"; break;
+case '^' : COMM("^");
+case L'ß' : std::cout << sep << " ab"; break;
+case -33 : std::cout << sep << " ab"; break;
+case '\t': putc(c, stdout); continue;
+
 
 
 
@@ -74,7 +77,7 @@ case L'ß' : COMM("Flush");
 //integer
 //num
 default:
-  std::cout << sep << c; break;
+  std::cout << sep << int(c); break;
   }
 sep = ", ";
 }
