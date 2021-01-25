@@ -94,11 +94,13 @@ sc = PushVar
 a :: Command
 a = Push (Varadr 'a')
 b :: Command
-b = Push (Varadr 'a')
+b = Push (Varadr 'b')
 c :: Command
-c = Push (Varadr 'a')
+c = Push (Varadr 'c')
+d :: Command
+d = Push (Varadr 'd')
 e :: Command
-e = Push (Varadr 'a')
+e = Push (Varadr 'e')
 f :: Command
 f = Push (Varadr 'f')
 g :: Command
