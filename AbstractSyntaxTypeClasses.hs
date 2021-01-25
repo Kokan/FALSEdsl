@@ -25,21 +25,6 @@ instance Num StackEntry where
      signum = ap1StackEntry (signum)
      fromInteger a = Integer (fromInteger a)
 
-instance IsChar Command where
-    toChar (Push (Char c)) = c
-    toChar _ = error "not char"
-    fromChar c = Push (Char c)
-
-instance Enum Command where
-    toEnum a = Push $ Char $ chr a
-    fromEnum (Push (Char c)) = ord c
-    fromEnum _ = error "stuff"
-
-instance IsChar StackEntry where
-    toChar (Char c) = c
-    toChar _ = error "not char"
-    fromChar c = Char c
-
 instance IsString Command where
     fromString str = PrintStr str
 
