@@ -90,3 +90,23 @@ oddword = [  [ [ ($), PushChar ' ',  (==)],  [ (%),  cc],  (#)],  b,  (\:),
              [ w,  sc,  (!),  [ cc,  o,  sc,  (!),  (\\),  cc],  (?)],  o,  (\:),
              (^), b,  sc,  (!),  [ ($), PushChar ' ',  (.),  (==),  (\~)],  [ w,  sc,  [ (^),  cc],  (#),  b,  sc,  (!),  s,  sc,  (!),  o,  sc,  (!),  b,  sc,  (!),  s,  sc,  (!)],  (#),  cc ]
 
+--{ faculty program in false! }
+-- 
+-- [$1=$[\%1\]?~[$1-f;!*]?]f:          { fac() in false }
+-- 
+-- "calculate the faculty of [1..8]: "
+-- ab^ab'0-$$0>~\8>|$
+-- "result: "
+-- ~[\f;!.]?
+-- ["illegal input!"]?"
+-- "
+
+
+fac :: Commands
+fac = [ [($), 1, (==), ($), [ (\\), (%), 1, (\\) ], (?), (\~), [ ($), 1, (-), f, sc, (!), (*) ], (?) ], f, (\:),
+        "calculate the faculty of [1..8]: ",
+        ab, (^), ab, PushChar '0', (-), ($), ($), 0, (>), (\~), (\\), 8, (>), (\|), ($),
+        "result ",
+        (\~), [ (\\), f, sc, (!), (.) ], (?),
+        ["illegal input"], (?), 10, cc ]
+
