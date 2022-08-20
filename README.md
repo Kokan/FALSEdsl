@@ -1,5 +1,5 @@
-# FALSEdsl
-DSL for http://strlen.com/false-language/ in Haskell
+# FALSE
+http://strlen.com/false-language/ in Haskell
 
 +---------------------------------------+
 |	FALSE language overview.	|
